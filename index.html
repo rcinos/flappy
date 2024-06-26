@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Home</title>
+    <link rel="stylesheet" href="./src/main.css" />
+  </head>
+  <body>
+    <div class="wrapper">
+      <p class="header">Settings</p>
+      <div class="settings">
+        <section>
+          <p class="settings__title">Column Gap</p>
+          <span>Insane</span>
+          <input name="column-gap" type="range" min="1" max="10" />
+          <span>Easy</span>
+        </section>
+        <section>
+          <p class="settings__title">Bird speed</p>
+          <span>Insane</span>
+          <input name="bird-speed" type="range" min="1" max="15" />
+          <span>Easy</span>
+        </section>
+        <section>
+          <p class="settings__title">Bird's jump</p>
+          <span>Insane</span>
+          <input name="bird-jump" type="range" min="0" max="20" />
+          <span>Insane</span>
+        </section>
+
+        <section>
+          <p class="settings__title">Add background inversion</p>
+          <span>No</span>
+          <label class="switch">
+            <input type="checkbox" />
+            <span class="slider round"></span>
+          </label>
+          <span>Yes</span>
+        </section>
+      </div>
+      <a href="./game.html" class="start">Start</a>
+    </div>
+  </body>
+
+  <script type="module">
+    const range = document.querySelectorAll('input[type="range"]');
+    const checkbox = document.querySelector('input[type="checkbox"]');
+    const button = document.querySelector(".start");
+
+    button.addEventListener("click", () => {
+      for (let i = 0; i < range.length; i++) {
+        const value = range[i].value;
+        localStorage.setItem(range[i].name, value);
+      }
+      localStorage.setItem("inversion", checkbox.checked);
+    });
+  </script>
+</html>

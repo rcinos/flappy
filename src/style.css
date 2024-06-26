@@ -1,0 +1,87 @@
+body {
+  height: 100svh;
+  margin: 0;
+  padding: 0;
+  background-color: aqua;
+  box-sizing: border-box;
+  overflow: hidden;
+  --bird-width: 40px;
+  touch-action: manipulation;
+  font-family: "Roboto Mono", sans-serif;
+  --column-gap: 5;
+}
+
+p {
+  margin: 0;
+}
+
+#bird {
+  width: var(--bird-width);
+  height: 40px;
+  position: absolute;
+  left: 20vw;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--bird-width) * var(--column-gap));
+  height: 100%;
+  position: absolute;
+  width: var(--bird-width);
+}
+
+.column > div {
+  background: linear-gradient(90deg, #f243ff, #436fff);
+}
+
+.bottom-column {
+  height: 100%;
+  flex: 1;
+}
+
+.score {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 10px;
+  background-color: white;
+  border-radius: 10px;
+  font-size: 20px;
+  font-family: "Roboto Light", sans-serif;
+  font-weight: 700;
+  color: #ff6b43;
+  z-index: 2;
+}
+
+.restart {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: cadetblue;
+  border: darkgreen 2px solid;
+  border-radius: 10px;
+  box-shadow: darkgreen 0 0 10px 5px;
+  padding: 2em 4em;
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+  color: gold;
+  justify-content: center;
+  z-index: 5;
+  white-space: nowrap;
+}
+
+.restart button {
+  background: linear-gradient(90deg, #ff6b43, #436fff);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 10px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
