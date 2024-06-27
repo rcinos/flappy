@@ -31,17 +31,22 @@ body {
 .settings {
   display: flex;
   flex-direction: column;
-  gap: 1.5em;
+  gap: 1em;
+}
+
+.settings__title {
+  color: #ffeea5;
 }
 
 .settings span {
   font-size: 0.7rem;
+    color: #ffeea5;
 }
 
 .start {
   display: block;
   width: fit-content;
-  margin: 5em auto;
+  margin: 3em auto;
   background: linear-gradient(90deg, #ff6b43, #436fff);
   color: white;
   border: none;
@@ -116,4 +121,14 @@ input:checked + .slider:before {
 
 .slider.round:before {
   border-radius: 50%;
+}
+
+input[type="number"] {
+  width: 100px;
+  padding: 5px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  text-align: center;
+  color: #333;
+  box-shadow: 0 0 5px 2px #fbb840;
 }

@@ -1,164 +1,154 @@
-const bird = document.getElementById("bird") as HTMLDivElement;
-const field = document.getElementById("field") as HTMLBodyElement;
-const scoreDisplay = document.getElementById("score") as HTMLDivElement;
-const restartWindow = document.getElementById("restart") as HTMLDivElement;
-const restartButton = document.getElementById(
-  "restart-btn",
-) as HTMLButtonElement;
-const finalScore = document.getElementById("final-score") as HTMLDivElement;
-const bestScore = document.getElementById("best-score") as HTMLDivElement;
-let animId: number;
-const birdSpeed = localStorage.getItem("bird-speed")
-  ? Number(localStorage.getItem("bird-speed"))
-  : 2;
-const birdJump = localStorage.getItem("bird-jump")
-  ? Number(localStorage.getItem("bird-jump"))
-  : 10;
-const columnGap = localStorage.getItem("column-gap")
-  ? Number(localStorage.getItem("column-gap"))
-  : 5;
+const birdElement = document.getElementById("bird") as HTMLDivElement;
+const fieldElement = document.getElementById("field") as HTMLBodyElement;
+const scoreDisplayElement = document.getElementById("score") as HTMLDivElement;
+const restartWindowElement = document.getElementById("restart") as HTMLDivElement;
+const restartButtonElement = document.getElementById("restart-btn") as HTMLButtonElement;
+const finalScoreElement = document.getElementById("final-score") as HTMLDivElement;
+const bestScoreElement = document.getElementById("best-score") as HTMLDivElement;
 
-const isInverse = localStorage.getItem("inversion") === "true" || false;
-let stopInverseInterval: NodeJS.Timeout;
+let animationId: number;
+let inverseModeIntervalId: NodeJS.Timeout;
+let columnGenerationIntervalId: NodeJS.Timeout;
+
+const birdSpeed = getLocalStorageNumber("bird-speed", 2);
+const birdJump = getLocalStorageNumber("bird-jump", 10);
+const columnGap = getLocalStorageNumber("column-gap", 5);
+const columnSpeed = getLocalStorageNumber("column-speed", 2000);
+const isInverseMode = localStorage.getItem("inversion") === "true";
+
+let jumpAmount = 0;
+const gravity = 0.5;
+let isJumping = false;
+let isGameStarted = false;
+let score = 0;
+
+
 
 document.body.style.setProperty("--column-gap", `${columnGap}`);
 
-let jump = 0;
-let gravity = 0.5;
-let isJumping = false;
-let isGameStarted = false;
-let stopInterval: NodeJS.Timeout;
-let scoreCounter = 0;
+initializeEventListeners();
 
-function restartGame(e: MouseEvent) {
-  e.stopPropagation();
-  bird.style.top = "50%";
-  scoreCounter = 0;
-  scoreDisplay.innerText = `${scoreCounter}`;
-  restartWindow.style.display = "none";
-  const columns = Array.from(document.querySelectorAll<HTMLElement>(".column"));
-  columns.forEach((column) => {
-    column.remove();
-  });
-  cancelAnimationFrame(animId); // Ensure previous animation is canceled
+function initializeEventListeners() {
+  document.addEventListener("keydown", handleJump);
+  document.addEventListener("touchstart", handleJump);
+  restartButtonElement.addEventListener("click", restartGame);
+}
+
+function getLocalStorageNumber(key: string, defaultValue: number): number {
+  return localStorage.getItem(key) ? Number(localStorage.getItem(key)) : defaultValue;
+}
+
+function restartGame(event: MouseEvent) {
+  event.stopPropagation();
+
+  resetGameState();
+  removeColumns();
+  cancelAnimationFrame(animationId);
+
+  startGameListeners();
+}
+
+function resetGameState() {
+  birdElement.style.top = "50%";
+  score = 0;
+  scoreDisplayElement.innerText = `${score}`;
+  restartWindowElement.style.display = "none";
+
   isGameStarted = false;
-  jump = 0; // Reset jump
-  isJumping = false; // Reset jumping state
-  window.scrollTo(0, 0);
-  clearInterval(stopInterval);
-  clearInterval(stopInverseInterval);
+  jumpAmount = 0;
+  isJumping = false;
 
-  document.removeEventListener("keydown", handleJump);
-  document.removeEventListener("touchstart", handleJump);
+  clearInterval(inverseModeIntervalId);
+  clearInterval(columnGenerationIntervalId);
+}
 
+function removeColumns() {
+  const columns = document.querySelectorAll<HTMLElement>(".column");
+  columns.forEach(column => column.remove());
+}
+
+function startGameListeners() {
   document.addEventListener("keydown", handleJump);
   document.addEventListener("touchstart", handleJump);
 }
 
-document.addEventListener("keydown", handleJump);
-document.addEventListener("touchstart", handleJump);
-restartButton.addEventListener("click", restartGame);
-
-function step() {
-  const birdRect = bird.getBoundingClientRect();
-  const birdY = birdRect.y;
-  const birdHeight = birdRect.height;
-
-  if (isGameOver(birdY, birdHeight)) {
-    console.log("Game Over");
-    clearInterval(stopInverseInterval);
-    restartWindow.style.display = "flex";
-    finalScore.innerText = `${scoreCounter}`;
-    const bestScoreValue = localStorage.getItem("best-score");
-    if (!bestScoreValue || scoreCounter > Number(bestScoreValue)) {
-      localStorage.setItem("best-score", `${scoreCounter}`);
-    }
-    bestScore.innerText = `${localStorage.getItem("best-score") || scoreCounter}`;
-    return;
-  }
-
-  if (!isJumping) {
-    jump += gravity;
-  } else {
-    isJumping = false;
-  }
-
-  const columns = Array.from(document.querySelectorAll<HTMLElement>(".column"));
-
-  if (columns.length > 0) {
-    columns.forEach((column) => {
-      if (column.getBoundingClientRect().right < 0) {
-        column.remove();
-      } else {
-        const columnLeft = parseInt(column.style.left);
-        column.style.left = `${columnLeft - birdSpeed}px`;
-
-        // Check if the bird passed the column
-        if (
-          // @ts-ignore
-          !column.passed &&
-          column.getBoundingClientRect().right < birdRect.left
-        ) {
-          // @ts-ignore
-          column.passed = true; // Mark column as passed
-          scoreCounter++;
-          scoreDisplay.innerText = `${scoreCounter}`;
-        }
-      }
-    });
-  }
-
-  bird.style.top = `${birdY + jump}px`;
-
-  animId = window.requestAnimationFrame(step);
-}
-
-function handleJump(e: TouchEvent | KeyboardEvent) {
-  if (
-    (e instanceof KeyboardEvent && e.key === " ") ||
-    e instanceof TouchEvent
-  ) {
+function handleJump(event: TouchEvent | KeyboardEvent) {
+  if (event instanceof KeyboardEvent && event.key === " " || event instanceof TouchEvent) {
     if (!isGameStarted) {
-      animId = window.requestAnimationFrame(step);
-      if (isInverse) {
-        stopInverseInterval = setInterval(() => {
-          field.style.backgroundColor = `rgb(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)})`;
-        }, 1000);
-      }
-      setTimeout(() => {
-        drawColumns();
-        stopInterval = setInterval(() => {
-          drawColumns();
-        }, 2000);
-      }, 2000);
-      isGameStarted = true;
+      startGame();
     }
-    jump = birdJump;
+    jumpAmount = birdJump;
     isJumping = true;
   }
 }
 
-function drawColumns() {
-  const column = document.createElement("div");
-  const topColumn = document.createElement("div");
-  const bottomColumn = document.createElement("div");
-  column.classList.add("column");
-  topColumn.classList.add("top-column");
-  bottomColumn.classList.add("bottom-column");
-  column.appendChild(topColumn);
-  column.appendChild(bottomColumn);
-  topColumn.style.height =
-    Math.floor((Math.random() * (innerHeight - 100) + 100) * 0.7) + "px";
-  column.style.left = `${field.offsetWidth}px`;
-  // @ts-ignore
-  column.passed = false;
-  field.appendChild(column);
+function startGame() {
+  animationId = window.requestAnimationFrame(updateGame);
+  if (isInverseMode) {
+    inverseModeIntervalId = setInterval(changeBackgroundColor, 1000);
+  }
+  setTimeout(() => {
+    generateColumn();
+    columnGenerationIntervalId = setInterval(generateColumn, columnSpeed);
+  }, 2000);
+  isGameStarted = true;
+}
+
+function changeBackgroundColor() {
+  fieldElement.style.backgroundColor = `rgb(${randomColorValue()}, ${randomColorValue()}, ${randomColorValue()})`;
+}
+
+function randomColorValue(): number {
+  return Math.floor(Math.random() * 255);
+}
+
+function updateGame() {
+  const birdRect = birdElement.getBoundingClientRect();
+  const birdY = birdRect.y;
+  const birdHeight = birdRect.height;
+
+  if (isGameOver(birdY, birdHeight)) {
+    endGame();
+    return;
+  }
+
+  if (!isJumping) {
+    jumpAmount += gravity;
+  } else {
+    isJumping = false;
+  }
+
+  updateColumns();
+  birdElement.style.top = `${birdY + jumpAmount}px`;
+  animationId = window.requestAnimationFrame(updateGame);
+}
+
+function isGameOver(birdY: number, birdHeight: number): boolean {
+  if (birdY + birdHeight >= fieldElement.offsetHeight) {
+    return true;
+  }
+
+  return checkForCollision();
+}
+
+function endGame() {
+  console.log("GameLoop Over");
+  clearInterval(inverseModeIntervalId);
+  clearInterval(columnGenerationIntervalId);
+
+  restartWindowElement.style.display = "flex";
+  finalScoreElement.innerText = `${score}`;
+
+  const bestScoreValue = getLocalStorageNumber("best-score", 0);
+  if (score > bestScoreValue) {
+    localStorage.setItem("best-score", `${score}`);
+  }
+  bestScoreElement.innerText = `${localStorage.getItem("best-score") || score}`;
 }
 
 function checkForCollision(): boolean {
-  const birdRect = bird.getBoundingClientRect();
-
-  const columns = Array.from(document.querySelectorAll<HTMLElement>(".column"));
+  const birdRect = birdElement.getBoundingClientRect();
+  const columns = document.querySelectorAll<HTMLElement>(".column");
 
   for (const column of columns) {
     const columnRect = column.getBoundingClientRect();
@@ -166,11 +156,10 @@ function checkForCollision(): boolean {
     const bottomColumn = column.querySelector(".bottom-column") as HTMLElement;
 
     if (
-      birdRect.left < columnRect.left + columnRect.width &&
-      birdRect.left + birdRect.width > columnRect.left &&
-      (birdRect.top < columnRect.top + topColumn.offsetHeight ||
-        birdRect.top + birdRect.height >
-          columnRect.top + columnRect.height - bottomColumn.offsetHeight)
+        birdRect.left < columnRect.left + columnRect.width &&
+        birdRect.left + birdRect.width > columnRect.left &&
+        (birdRect.top < columnRect.top + topColumn.offsetHeight ||
+            birdRect.top + birdRect.height > columnRect.top + columnRect.height - bottomColumn.offsetHeight)
     ) {
       return true;
     }
@@ -178,16 +167,43 @@ function checkForCollision(): boolean {
   return false;
 }
 
-function isGameOver(birdY: number, birdHeight: number): boolean {
-  if (birdY + birdHeight >= field.offsetHeight) {
-    clearInterval(stopInterval);
-    return true;
-  }
+function updateColumns() {
+  const columns = document.querySelectorAll<HTMLElement>(".column");
 
-  if (checkForCollision()) {
-    clearInterval(stopInterval);
-    return true;
-  }
+  columns.forEach(column => {
+    if (column.getBoundingClientRect().right < 0) {
+      column.remove();
+    } else {
+      const columnLeft = parseInt(column.style.left);
+      column.style.left = `${columnLeft - birdSpeed}px`;
 
-  return false;
+      // @ts-ignore
+      if (!column.passed && column.getBoundingClientRect().right < birdElement.getBoundingClientRect().left) {
+        // @ts-ignore
+        column.passed = true;
+        score++;
+        scoreDisplayElement.innerText = `${score}`;
+      }
+    }
+  });
+}
+
+function generateColumn() {
+  const column = document.createElement("div");
+  const topColumn = document.createElement("div");
+  const bottomColumn = document.createElement("div");
+
+  column.classList.add("column");
+  topColumn.classList.add("top-column");
+  bottomColumn.classList.add("bottom-column");
+
+  column.appendChild(topColumn);
+  column.appendChild(bottomColumn);
+
+  topColumn.style.height = `${Math.floor((Math.random() * (innerHeight - 100) + 100) * 0.7)}px`;
+  column.style.left = `${fieldElement.offsetWidth}px`;
+  // @ts-ignore
+  column.passed = false;
+
+  fieldElement.appendChild(column);
 }

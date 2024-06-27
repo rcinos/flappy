@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Home</title>
-    <link rel="stylesheet" href="./src/main.css" />
+    <link rel="stylesheet" href="/src/main.css" />
   </head>
   <body>
     <div class="wrapper">
@@ -38,14 +38,19 @@
           </label>
           <span>Yes</span>
         </section>
+        <section>
+          <p class="settings__title">Column speed appearance</p>
+          <input type="number" name="column-speed" value="2000" />
+        </section>
       </div>
-      <a href="./game.html" class="start">Start</a>
+      <a href="/game.html" class="start">Start</a>
     </div>
   </body>
 
   <script type="module">
     const range = document.querySelectorAll('input[type="range"]');
     const checkbox = document.querySelector('input[type="checkbox"]');
+    const columnSpeed = document.querySelector('input[name="column-speed"]');
     const button = document.querySelector(".start");
 
     button.addEventListener("click", () => {
@@ -54,6 +59,7 @@
         localStorage.setItem(range[i].name, value);
       }
       localStorage.setItem("inversion", checkbox.checked);
+      localStorage.setItem("column-speed", columnSpeed.value);
     });
   </script>
 </html>

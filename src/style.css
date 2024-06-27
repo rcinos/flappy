@@ -16,7 +16,7 @@ p {
 }
 
 #bird {
-  width: var(--bird-width);
+  width: calc(var(--bird-width) * 2);
   height: 40px;
   position: absolute;
   left: 20vw;
